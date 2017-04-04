@@ -167,7 +167,7 @@ void ParseGoal(std::queue<std::string> &lines,
 }
 
 void ParsePrecondition(std::queue<std::string> &lines,
-                       std::vector<int> &precondition) {
+                       std::map<int, int> &precondition) {
   std::string buffer;
   int n = std::stoi(lines.front());
   lines.pop();
@@ -183,7 +183,7 @@ void ParsePrecondition(std::queue<std::string> &lines,
 }
 
 void ParseEffects(std::queue<std::string> &lines,
-                  std::vector<int> &precondition,
+                  std::map<int, int> &precondition,
                   std::vector< std::unique_ptr<sas_data::Effect> > &effects) {
   int n = std::stoi(lines.front());
   lines.pop();
@@ -214,7 +214,7 @@ void ParseEffects(std::queue<std::string> &lines,
 }
 
 void ParseOperator(std::queue<std::string> &lines, int metric,
-                   std::vector<int> &precondition,
+                   std::map<int, int> &precondition,
                    std::unique_ptr<sas_data::SASOperator> &sas_operator) {
   if (lines.front() != "begin_operator") {
     std::cerr << kFileError << std::endl;
@@ -241,17 +241,14 @@ void ParseOperator(std::queue<std::string> &lines, int metric,
 void ParseOperators(
     std::queue<std::string> &lines, int metric,
     int n_variables,
-    std::vector< std::vector<int> > &preconditions,
+    std::vector< std::map<int, int> > &preconditions,
     std::vector< std::unique_ptr<sas_data::SASOperator> > &sas_operators) {
   int n = std::stoi(lines.front());
   preconditions.resize(n);
   sas_operators.resize(n);
   lines.pop();
-  for (int i=0; i<n; ++i) {
-    preconditions[i].resize(n_variables);
-    std::fill_n(preconditions[i].begin(), n_variables, -1);
+  for (int i=0; i<n; ++i)
     ParseOperator(lines, metric, preconditions[i], sas_operators[i]);
-  }
 }
 
 void Parse(
@@ -259,7 +256,7 @@ void Parse(
     std::vector<int> &sups,
     std::vector< std::unordered_map<int, int> > &mutex_groups,
     std::unordered_map<int, int> &goal,
-    std::vector< std::vector<int> > &preconditions,
+    std::vector< std::map<int, int> > &preconditions,
     std::vector< std::unique_ptr<sas_data::SASOperator> > &sas_operators) {
   std::ifstream input;
   input.open(filename, std::ios::in);

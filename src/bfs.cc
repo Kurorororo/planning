@@ -1,5 +1,6 @@
 #include <chrono>
 #include <iostream>
+#include <map>
 #include <queue>
 #include <unordered_map>
 #include <vector>
@@ -21,8 +22,7 @@ void Expand(
     std::queue< boost::intrusive_ptr<node::Node> > &open_list,
     std::unordered_map<size_t, int> &closed_list) {
   ++expanded;
-  std::vector<int> result;
-  table.Find(node->variables_, result);
+  auto result = table.Find(node->variables_);
   for (auto i : result) {
     std::vector<int> new_variables = node->variables_;
     sas_operators[i]->ApplyEffects(new_variables);
@@ -77,7 +77,7 @@ int main(int argc, char *argv[]) {
   std::vector<int> sups;
   std::vector< std::unordered_map<int, int> > mutex_groups;
   std::unordered_map<int, int> goal;
-  std::vector< std::vector<int> > preconditions;
+  std::vector< std::map<int, int> > preconditions;
   std::vector< std::unique_ptr<sas_data::SASOperator> > sas_operators;
   parser::Parse(filename, variables, sups, mutex_groups, goal, preconditions,
                 sas_operators);

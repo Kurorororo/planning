@@ -1,4 +1,5 @@
 #include <chrono>
+#include <map>
 #include <iostream>
 #include <string>
 #include <unordered_map>
@@ -16,7 +17,7 @@ void Run(std::string filename) {
   std::vector<int> sups;
   std::vector< std::unordered_map<int, int> > mutex_groups;
   std::unordered_map<int, int> goal;
-  std::vector< std::vector<int> > preconditions;
+  std::vector< std::map<int, int> > preconditions;
   std::vector< std::unique_ptr<sas_data::SASOperator> > sas_operators;
 
   parser::Parse(filename, variables, sups, mutex_groups, goal, preconditions,

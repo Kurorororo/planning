@@ -68,8 +68,7 @@ int AstarSearch<T>::Expand(
     unordered_map<size_t, int> &closed_list,
     int min) {
   ++expanded_;
-  std::vector<int> result;
-  table.Find(node->variables_, result);
+  auto result = table.Find(node->variables_);
   for (auto i : result) {
     std::vector<int> new_variables = node->variables_;
     sas_operators[i]->ApplyEffects(new_variables);
