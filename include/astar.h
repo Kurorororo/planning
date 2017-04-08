@@ -1,6 +1,7 @@
 #ifndef ASTAR_H_
 #define ASTAR_H_
 
+#include <iostream>
 #include <type_traits>
 #include <unordered_map>
 #include <vector>
@@ -28,6 +29,10 @@ class AstarSearch {
           &sas_operators,
       const trie::TrieTable &table);
 
+  int get_evaluated() const {
+    return evaluated_;
+  }
+
   int get_expanded() const {
     return expanded_;
   }
@@ -48,6 +53,19 @@ class AstarSearch {
       std::unordered_map<size_t, int> &closed_list,
       int min);
 
+  void PrintNewHeuristicValue(int min_h, int g) {
+    std::cout << "New best heuristic value: " << min_h << std::endl;
+    std::cout << "[g=" << g << ", "
+             << evaluated_ << " evaluated, "
+             << expanded_ << " expanded]" << std::endl;
+  }
+
+  void PrintNewFValue(int min_f) {
+    std::cout << "f = " << min_f << " ["
+              << evaluated_ << " evaluated, "
+              << expanded_ << " expanded]" << std::endl;
+  }
+
   int evaluated_;
   int expanded_;
   int generated_;
@@ -57,4 +75,4 @@ class AstarSearch {
 
 #include "details/astar.h"
 
-#endif
+#endif // ASTAR_H_

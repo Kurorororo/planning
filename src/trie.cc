@@ -54,7 +54,9 @@ void TrieTable::RecursiveFind(const std::vector<int> &variables, int index,
   int prefix = index - code_table_[current];
   for (int i=current, n=variables.size(); i<n; ++i) {
     int next = code_table_[i] + variables[i] + prefix;
-    if (a_[next].second != -1) result.push_back(a_[next].second);
+    int offset = a_[next].second;
+    if (offset != -1)
+      result.insert(result.end(), data_[offset].begin(), data_[offset].end());
     if (a_[next].first == -1) continue;
     RecursiveFind(variables, a_[next].first, i+1, result);
   }

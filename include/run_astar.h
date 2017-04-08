@@ -63,10 +63,12 @@ void Run(std::string filename) {
 
   std::cout << "Plan length: " << step << " step(s)" << std::endl;
   std::cout << "Plan cost: " << step << std::endl;
-  std::cout << "Expanded " << astar.get_expanded() << " state(s)";
-  std::cout << std::endl;
-  std::cout << "Generated " << astar.get_generated() << " state(s)";
-  std::cout << std::endl;
+  std::cout << "Expanded " << astar.get_expanded() << " state(s)"
+            << std::endl;
+  std::cout << "Evaluated " << astar.get_evaluated() << " state(s)"
+            << std::endl;
+  std::cout << "Generated " << astar.get_generated() << " state(s)"
+            << std::endl;
   std::cout << "Search time: " << search_time << "s" << std::endl;
   std::cout << "Solution found." << std::endl;
 }
