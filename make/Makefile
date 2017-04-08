@@ -1,5 +1,6 @@
 SRC_DIR=../src
 INC_DIR=../include
+TEST_DIR=../test
 BIN_DIR=../bin
 
 INCS = -I$(INC_DIR) -I/usr/local/include/
@@ -20,6 +21,10 @@ goalcount:
 bfs:
 	$(CXX) -std=c++14 $(INCS) $(SRC_DIR)/bfs.cc $(SRC_DIR)/sas_data.cc \
   $(SRC_DIR)/trie.cc $(SRC_DIR)/parser.cc -O2 -o $(BIN_DIR)/bfs
+
+test_trie:
+	$(CXX) -std=c++14 $(INCS) $(TEST_DIR)/test_trie.cc $(SRC_DIR)/trie.cc \
+   -o $(BIN_DIR)/test_trie
 
 clean:
 	rm -f $(BIN_DIR)/*
