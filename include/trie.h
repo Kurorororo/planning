@@ -30,4 +30,4 @@ class TrieTable {
 
 } // namespace trie
 
-#endif
+#endif // TRIE_H_

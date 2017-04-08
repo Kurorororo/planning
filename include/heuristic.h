@@ -1,6 +1,7 @@
 #ifndef HEURISTIC_H_
 #define HEURISTIC_H_
 
+#include <string>
 #include <type_traits>
 #include <unordered_map>
 #include <vector>
@@ -14,6 +15,7 @@ class HeuristicInterface {
                  const std::unordered_map<int, int> &goal) {
     return static_cast<T &>(this)->operator()(variables, goal);
   }
+
 };
 
 template<class T>
@@ -31,4 +33,4 @@ class Heuristic {
 
 }
 
-#endif
+#endif // HEURISTIC_H_

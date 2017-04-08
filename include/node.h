@@ -23,12 +23,12 @@ class Node {
     action_ = action;
   }
 
-  int get_cost() const {
-    return cost_;
+  int get_g() const {
+    return g_;
   }
 
-  void set_cost(int cost) {
-    cost_ = cost;
+  void set_g(int g) {
+    g_ = g;
   }
 
   int get_step() const {
@@ -56,12 +56,12 @@ class Node {
   static int n_node;
 
  private:
-  Node() : action_(""), cost_(0), step_(0), parent_node_(nullptr) {}
+  Node() : action_(""), g_(0), step_(0), parent_node_(nullptr) {}
   ~Node() {}
 
   int8_t ref_count;
   std::string action_;
-  int cost_;
+  int g_;
   int step_;
   boost::intrusive_ptr<Node> parent_node_;
   static boost::pool<> node_pool;
@@ -79,6 +79,8 @@ class Node {
 
 boost::pool<> Node::node_pool(sizeof(Node), 100000);
 
+using ptr_t = boost::intrusive_ptr<Node>;
+
 } // namespace node
 
-#endif
+#endif // NODE_H_

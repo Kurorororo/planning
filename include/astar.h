@@ -6,7 +6,7 @@
 #include <vector>
 
 #include "heuristic.h"
-#include "heuristic_node.h"
+#include "node.h"
 #include "sas_data.h"
 #include "trie.h"
 
@@ -21,7 +21,7 @@ class AstarSearch {
   AstarSearch() : generated_(0), expanded_(0) {}
   ~AstarSearch() {}
 
-  heuristic_node::ptr_t Search(
+  node::ptr_t Search(
       const std::vector<int> &variables,
       const std::unordered_map<int, int> &goal,
       const std::vector< std::unique_ptr<sas_data::SASOperator> >
@@ -38,16 +38,17 @@ class AstarSearch {
 
  private:
   int Expand(
-      T functor,
-      heuristic_node::ptr_t node,
+      T heuristic,
+      node::ptr_t node,
       const std::unordered_map<int, int> &goal,
       const std::vector< std::unique_ptr<sas_data::SASOperator> >
           &sas_operators,
       const trie::TrieTable &table,
-      std::vector< std::vector<heuristic_node::ptr_t> > &open_list,
+      std::vector< std::vector<node::ptr_t> > &open_list,
       std::unordered_map<size_t, int> &closed_list,
       int min);
 
+  int evaluated_;
   int expanded_;
   int generated_;
 };

@@ -21,4 +21,4 @@ void Parse(
 
 } // namespace parser
 
-#endif
+#endif // PARSER_H_

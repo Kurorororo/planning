@@ -1,6 +1,5 @@
-#include "goal_count.h"
+#include "goalcount.h"
 
-#include <memory>
 #include <unordered_map>
 #include <vector>
 
@@ -8,9 +7,9 @@
 
 namespace heuristic {
 
-int GoalCount::operator()(const std::vector<int> &variables,
+int Goalcount::operator()(const std::vector<int> &variables,
                           const std::unordered_map<int, int> &goal) {
-  int count = variables.size();
+  int count = goal.size();
   for (auto v : goal)
     if (variables[v.first] == v.second) --count;
   return count;

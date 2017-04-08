@@ -1,7 +1,6 @@
-#ifndef GOAL_COUNT_H_
-#define GOAL_COUNT_H_
+#ifndef GOALCOUNT_H_
+#define GOALCOUNT_H_
 
-#include <memory>
 #include <unordered_map>
 #include <vector>
 
@@ -9,12 +8,12 @@
 
 namespace heuristic {
 
-class GoalCount : public HeuristicInterface<GoalCount> {
+class Goalcount : public HeuristicInterface<Goalcount> {
  public:
   int operator()(const std::vector<int> &variables,
                  const std::unordered_map<int, int> &goal);
 };
 
-} // namespace goal_count
+} // namespace heuristic
 
-#endif
+#endif // GOALCOUNT_H_

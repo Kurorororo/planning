@@ -28,16 +28,16 @@ void Expand(
     sas_operators[i]->ApplyEffects(new_variables);
     size_t hash = boost::hash_range(new_variables.begin(),
                                     new_variables.end());
-    int cost = node->get_cost()+sas_operators[i]->get_cost();
+    int g = node->get_g()+sas_operators[i]->get_cost();
     if (closed_list.find(hash) != closed_list.end()
-        && closed_list[hash] <= cost) {
+        && closed_list[hash] <= g) {
       continue;
     }
     auto child = node::Node::Construct();
     ++generated;
     child->variables_ = std::move(new_variables);
     child->set_action(sas_operators[i]->get_name());
-    child->set_cost(cost);
+    child->set_g(g);
     child->set_step(node->get_step()+1);
     child->set_parent_node(node);
     open_list.push(child);
@@ -61,7 +61,7 @@ boost::intrusive_ptr<node::Node> BFS(
     if (sas_data::GoalCheck(node->variables_, goal)) return node;
     size_t hash = boost::hash_range(node->variables_.begin(),
                                     node->variables_.end());
-    closed_list[hash] = node->get_cost();
+    closed_list[hash] = node->get_g();
     Expand(node, sas_operators, table, open_list, closed_list);
   }
   return nullptr;
@@ -95,12 +95,12 @@ int main(int argc, char *argv[]) {
   double search_time = static_cast<double>(ns) / 1e9;
   std::cout << "Acutual search time: " << search_time << "s" << std::endl;
   int step = result->get_step();
-  int cost = result->get_cost();
+  int cost = result->get_g();
   std::vector<std::string> actions;
   std::vector<int> costs;
   while (result != nullptr) {
     actions.push_back(result->get_action());
-    costs.push_back(result->get_cost());
+    costs.push_back(result->get_g());
     result = result->get_parent_node();
   }
   int sum = 0;

@@ -84,4 +84,4 @@ bool GoalCheck(const std::vector<int> &variables,
 
 } // namespace sas_data
 
-#endif
+#endif // SAS_DATA_H_

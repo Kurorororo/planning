@@ -41,13 +41,13 @@ void Run(std::string filename) {
   std::cout << "Acutual search time: " << search_time << "s" << std::endl;
 
   int step = result->get_step();
-  int cost = result->get_cost();
+  int cost = result->get_g();
 
   std::vector<std::string> actions;
   std::vector<int> costs;
   while (result != nullptr) {
     actions.push_back(result->get_action());
-    costs.push_back(result->get_cost());
+    costs.push_back(result->get_g());
     result = result->get_parent_node();
   }
 
