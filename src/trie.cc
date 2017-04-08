@@ -49,33 +49,20 @@ void TrieTable::Insert(int query, const std::map<int, int> &precondition) {
   }
 }
 
+void TrieTable::RecursiveFind(const std::vector<int> &variables, int index,
+                              int current, std::vector<int> &result) const {
+  int prefix = index - code_table_[current];
+  for (int i=current, n=variables.size(); i<n; ++i) {
+    int next = code_table_[i] + variables[i] + prefix;
+    if (a_[next].second != -1) result.push_back(a_[next].second);
+    if (a_[next].first == -1) continue;
+    RecursiveFind(variables, a_[next].first, i+1, result);
+  }
+}
+
 std::vector<int> TrieTable::Find(const std::vector<int> &variables) const {
   std::vector<int> result;
-  std::queue< std::pair<int, int> > indexes;
-  int n = variables.size();
-  for (int i=0; i<n; ++i) {
-    int index = code_table_[i] + variables[i];
-    int offset = a_[index].second;
-    if (a_[index].first != -1)
-      indexes.push(std::make_pair(a_[index].first, i+1));
-    if (offset != -1)
-      result.insert(result.end(), data_[offset].begin(), data_[offset].end());
-  }
-  while (!indexes.empty()) {
-    auto node = indexes.front();
-    indexes.pop();
-    int prefix = node.first - code_table_[node.second];
-    for (int i=node.second; i<n; ++i) {
-      int index = code_table_[i] + variables[i] + prefix;
-      int offset = a_[index].second;
-      if (a_[index].first != -1)
-        indexes.push(std::make_pair(a_[index].first, i+1));
-      if (offset != -1) {
-        result.insert(result.end(), data_[offset].begin(),
-                      data_[offset].end());
-      }
-    }
-  }
+  RecursiveFind(variables, 0, 0, result);
   return std::move(result);
 }
 

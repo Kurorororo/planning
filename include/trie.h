@@ -22,6 +22,9 @@ class TrieTable {
       const std::vector<int> &sups);
 
  private:
+  void RecursiveFind(const std::vector<int> &variables, int index,
+                     int current, std::vector<int> &result) const;
+
   int max_children_;
   std::vector< std::pair<int, int> > a_;
   std::vector<int> code_table_;
