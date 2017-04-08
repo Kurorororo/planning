@@ -1,6 +1,5 @@
 #include "../astar.h"
 
-#include <iostream>
 #include <unordered_map>
 #include <vector>
 
@@ -35,6 +34,7 @@ ptr_t AstarSearch<T>::Search(
   auto node = node::Node::Construct();
   node->variables_ = variables;
   int min_h = heuristic(variables, goal);
+  ++evaluated_;
   int min_f = min_h;
   open_list.resize(min_f+1);
   for (int i=0, n=open_list.size(); i<n; ++i)
@@ -46,16 +46,17 @@ ptr_t AstarSearch<T>::Search(
   while (!open_list[min_f].empty()) {
     node = open_list[min_f].back();
     open_list[min_f].pop_back();
+
     min_h = min_f - node->get_g();
     if (min_h < pre_min_h) {
-      std::cout << "New best heuristic value: " << min_h << std::endl;
-      std::cout << "[g=" << node->get_g() << "]" << std::endl;
+      PrintNewHeuristicValue(min_h, node->get_g());
       pre_min_h = min_h;
     }
     if (min_f != pre_min_f) {
-      std::cout << "f = " << min_f << std::endl;
+      PrintNewFValue(min_f);
       pre_min_f = min_f;
     }
+
     if (sas_data::GoalCheck(node->variables_, goal)) return node;
     size_t hash = boost::hash_range(node->variables_.begin(),
                                     node->variables_.end());
@@ -63,7 +64,7 @@ ptr_t AstarSearch<T>::Search(
     min_f = Expand(heuristic, node, goal, sas_operators, table, open_list,
                    closed_list, min_f);
     while (open_list[min_f].empty()) {
-      if (++min_f > open_list.size()) return nullptr;
+      if (++min_f >= open_list.size()) return nullptr;
     }
   }
   return nullptr;
@@ -99,6 +100,7 @@ int AstarSearch<T>::Expand(
     child->set_step(node->get_step()+1);
     child->set_parent_node(node);
     int f = child->get_g() + heuristic(child->variables_, goal);
+    ++evaluated_;
     if (open_list.size() <= f) open_list.resize(f+1);
     open_list[f].reserve(10000);
     open_list[f].push_back(child);
