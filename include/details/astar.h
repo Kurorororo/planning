@@ -63,7 +63,7 @@ ptr_t AstarSearch<T>::Search(
     min_f = Expand(heuristic, node, goal, sas_operators, table, open_list,
                    closed_list, min_f);
     while (open_list[min_f].empty()) {
-      if (++min_f > open_list.size()) return nullptr;
+      if (++min_f >= open_list.size()) return nullptr;
     }
   }
   return nullptr;
