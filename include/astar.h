@@ -19,7 +19,7 @@ class AstarSearch {
                 "T is not extended interface class");
 
  public:
-  AstarSearch() : generated_(0), expanded_(0) {}
+  AstarSearch() : evaluated_(0), generated_(0), expanded_(0) {}
   ~AstarSearch() {}
 
   node::ptr_t Search(
@@ -43,7 +43,6 @@ class AstarSearch {
 
  private:
   int Expand(
-      T heuristic,
       node::ptr_t node,
       const std::unordered_map<int, int> &goal,
       const std::vector< std::unique_ptr<sas_data::SASOperator> >
@@ -66,6 +65,7 @@ class AstarSearch {
               << expanded_ << " expanded]" << std::endl;
   }
 
+  T heuristic;
   int evaluated_;
   int expanded_;
   int generated_;

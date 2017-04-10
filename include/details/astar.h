@@ -28,7 +28,6 @@ ptr_t AstarSearch<T>::Search(
   vector< vector<ptr_t> > open_list;
   unordered_map<size_t, int> closed_list;
   closed_list.reserve(100000);
-  T heuristic;
 
   ++generated_;
   auto node = node::Node::Construct();
@@ -61,8 +60,8 @@ ptr_t AstarSearch<T>::Search(
     size_t hash = boost::hash_range(node->variables_.begin(),
                                     node->variables_.end());
     closed_list[hash] = node->get_g();
-    min_f = Expand(heuristic, node, goal, sas_operators, table, open_list,
-                   closed_list, min_f);
+    min_f = Expand(node, goal, sas_operators, table, open_list, closed_list,
+                   min_f);
     while (open_list[min_f].empty()) {
       if (++min_f >= open_list.size()) return nullptr;
     }
@@ -72,7 +71,6 @@ ptr_t AstarSearch<T>::Search(
 
 template<class T>
 int AstarSearch<T>::Expand(
-    T heuristic,
     ptr_t node,
     const unordered_map<int, int> &goal,
     const vector< unique_ptr<SASOperator> > &sas_operators,
