@@ -13,10 +13,15 @@ ifeq ($(UNAME),Darwin)
   CXX=/usr/bin/clang++
 endif
 
-goalcount:
-	$(CXX) -std=c++14 $(INCS) $(SRC_DIR)/run_goalcount.cc \
+goalcount_astar:
+	$(CXX) -std=c++14 $(INCS) $(SRC_DIR)/run_goalcount_astar.cc \
   $(SRC_DIR)/goalcount.cc $(SRC_DIR)/sas_data.cc $(SRC_DIR)/trie.cc \
-  $(SRC_DIR)/parser.cc -o $(BIN_DIR)/goalcount
+  $(SRC_DIR)/parser.cc -o $(BIN_DIR)/goalcount_astar
+
+goalcount_mrw:
+	$(CXX) -std=c++14 $(INCS) $(SRC_DIR)/run_goalcount_mrw.cc \
+  $(SRC_DIR)/goalcount.cc $(SRC_DIR)/sas_data.cc $(SRC_DIR)/trie.cc \
+  $(SRC_DIR)/parser.cc -o $(BIN_DIR)/goalcount_mrw
 
 bfs:
 	$(CXX) -std=c++14 $(INCS) $(SRC_DIR)/bfs.cc $(SRC_DIR)/sas_data.cc \
