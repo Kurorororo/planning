@@ -1,7 +1,8 @@
-#ifndef ASTAR_H_
-#define ASTAR_H_
+#ifndef MRW_H_
+#define MRW_H_
 
 #include <iostream>
+#include <random>
 #include <type_traits>
 #include <unordered_map>
 #include <vector>
@@ -11,24 +12,38 @@
 #include "sas_data.h"
 #include "trie.h"
 
-namespace astar {
+namespace mrw {
 
 template<class T>
-class AstarSearch {
+class MRW {
   static_assert(std::is_base_of<heuristic::HeuristicInterface<T>, T>::value,
                 "T is not extended interface class");
-
  public:
-  AstarSearch(
+  MRW(
       const std::vector<int> &sups,
       const std::unordered_map<int, int> &goal,
       const std::vector< std::map<int, int> > &preconditions,
       const std::vector< std::unique_ptr< sas_data::SASOperator> >
-          &sas_operators) : evaluated_(0), generated_(0), expanded_(0) {
+          &sas_operators,
+      double alpha=0.9,
+      int num_walk=2000,
+      int length_walk=10,
+      int extending_period=300,
+      double extending_rate=1.5,
+      int max_steps=7)
+      : alpha_(alpha),
+        num_walk_(num_walk),
+        length_walk_(length_walk),
+        extending_period_(extending_period),
+        extending_rate_(extending_rate),
+        max_steps_(max_steps),
+        evaluated_(0),
+        expanded_(0),
+        generated_(0) {
     heuristic.Initialize(sups, goal, preconditions, sas_operators);
   }
-  
-  ~AstarSearch() {}
+
+  ~MRW() {}
 
   node::ptr_t Search(
       const std::vector<int> &variables,
@@ -50,18 +65,6 @@ class AstarSearch {
     return generated_;
   }
 
- private:
-  int Expand(
-      node::ptr_t node,
-      const std::unordered_map<int, int> &goal,
-      const std::vector< std::map<int, int> > &preconditions,
-      const std::vector< std::unique_ptr<sas_data::SASOperator> >
-          &sas_operators,
-      const trie::TrieTable &table,
-      std::vector< std::vector<node::ptr_t> > &open_list,
-      std::unordered_map<size_t, int> &closed_list,
-      int min);
-
   void PrintNewHeuristicValue(int min_h, int g) {
     std::cout << "New best heuristic value: " << min_h << std::endl;
     std::cout << "[g=" << g << ", "
@@ -69,20 +72,31 @@ class AstarSearch {
              << expanded_ << " expanded]" << std::endl;
   }
 
-  void PrintNewFValue(int min_f) {
-    std::cout << "f = " << min_f << " ["
-              << evaluated_ << " evaluated, "
-              << expanded_ << " expanded]" << std::endl;
-  }
+ private:
+  node::ptr_t PureRandomWalk(
+      const std::unordered_map<int, int> &goal,
+      const std::vector< std::map<int, int> > &preconditions,
+      const std::vector< std::unique_ptr<sas_data::SASOperator> >
+          &sas_operators,
+      const trie::TrieTable &table,
+      node::ptr_t s);
 
   T heuristic;
+  std::default_random_engine engine_;
+  double alpha_;
+  double extending_rate_;
+  int num_walk_;
+  int length_walk_;
+  int extending_period_;
+  int max_steps_;
+  int h_min_;
   int evaluated_;
   int expanded_;
   int generated_;
 };
 
-} // namespace astar
+} // namespace mrw
 
-#include "details/astar.h"
+#include "details/mrw.h"
 
-#endif // ASTAR_H_
+#endif // MRW_H_

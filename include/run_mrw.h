@@ -5,11 +5,11 @@
 #include <unordered_map>
 #include <vector>
 
-#include "astar.h"
+#include "mrw.h"
 #include "parser.h"
 #include "trie.h"
 
-namespace astar {
+namespace mrw {
 
 template<class T>
 void Run(std::string filename) {
@@ -25,9 +25,9 @@ void Run(std::string filename) {
 
   auto chrono_start = std::chrono::system_clock::now();
   auto table = trie::TrieTable::Construct(preconditions, sups);
-  AstarSearch<T> astar(sups, goal, preconditions, sas_operators);
-  auto result = astar.Search(variables, goal, preconditions, sas_operators,
-                             table);
+  MRW<T> mrw(sups, goal, preconditions, sas_operators);
+  auto result = mrw.Search(variables, goal, preconditions, sas_operators,
+                           table);
   auto chrono_end = std::chrono::system_clock::now();
 
   if (result == nullptr) {
@@ -64,14 +64,14 @@ void Run(std::string filename) {
 
   std::cout << "Plan length: " << step << " step(s)" << std::endl;
   std::cout << "Plan cost: " << step << std::endl;
-  std::cout << "Expanded " << astar.get_expanded() << " state(s)"
+  std::cout << "Expanded " << mrw.get_expanded() << " state(s)"
             << std::endl;
-  std::cout << "Evaluated " << astar.get_evaluated() << " state(s)"
+  std::cout << "Evaluated " << mrw.get_evaluated() << " state(s)"
             << std::endl;
-  std::cout << "Generated " << astar.get_generated() << " state(s)"
+  std::cout << "Generated " << mrw.get_generated() << " state(s)"
             << std::endl;
   std::cout << "Search time: " << search_time << "s" << std::endl;
   std::cout << "Solution found." << std::endl;
 }
 
-} // namespace astar
+} // namespace mrw
