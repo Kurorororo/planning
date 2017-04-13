@@ -1,5 +1,6 @@
 #include "trie.h"
 
+#include <algorithm>
 #include <numeric>
 #include <map>
 #include <iostream>

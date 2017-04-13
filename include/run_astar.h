@@ -25,8 +25,9 @@ void Run(std::string filename) {
 
   auto chrono_start = std::chrono::system_clock::now();
   auto table = trie::TrieTable::Construct(preconditions, sups);
-  AstarSearch<T> astar;
-  auto result = astar.Search(variables, goal, sas_operators, table);
+  AstarSearch<T> astar(sups, goal, preconditions, sas_operators);
+  auto result = astar.Search(variables, goal, preconditions, sas_operators,
+                             table);
   auto chrono_end = std::chrono::system_clock::now();
 
   if (result == nullptr) {

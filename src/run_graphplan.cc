@@ -24,6 +24,10 @@ int main(int argc, char *argv[]) {
   graphplan::Graphplan plan(sups, goal, preconditions, sas_operators);
   auto result = plan.Search(initial, preconditions, sas_operators);
   for (int i=result.size()-1; i>-1; --i) {
+    if (result[i] == -1) {
+      std::cout << "faild to solve problem." << std::endl;
+      exit(0);
+    }
     std::cout << sas_operators[result[i]]->get_name() << std::endl;
   }
 }

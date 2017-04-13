@@ -19,8 +19,18 @@ class MRW {
   static_assert(std::is_base_of<heuristic::HeuristicInterface<T>, T>::value,
                 "T is not extended interface class");
  public:
-  MRW(double alpha=0.9, int num_walk=2000, int length_walk=10,
-      int extending_period=300, double extending_rate=1.5, int max_steps=7)
+  MRW(
+      const std::vector<int> &sups,
+      const std::unordered_map<int, int> &goal,
+      const std::vector< std::map<int, int> > &preconditions,
+      const std::vector< std::unique_ptr< sas_data::SASOperator> >
+          &sas_operators,
+      double alpha=0.9,
+      int num_walk=2000,
+      int length_walk=10,
+      int extending_period=300,
+      double extending_rate=1.5,
+      int max_steps=7)
       : alpha_(alpha),
         num_walk_(num_walk),
         length_walk_(length_walk),
@@ -29,13 +39,16 @@ class MRW {
         max_steps_(max_steps),
         evaluated_(0),
         expanded_(0),
-        generated_(0) {}
+        generated_(0) {
+    heuristic.Initialize(sups, goal, preconditions, sas_operators);
+  }
 
   ~MRW() {}
 
   node::ptr_t Search(
       const std::vector<int> &variables,
       const std::unordered_map<int, int> &goal,
+      const std::vector< std::map<int, int> > &preconditions,
       const std::vector< std::unique_ptr<sas_data::SASOperator> >
           &sas_operators,
       const trie::TrieTable &table);
@@ -62,6 +75,7 @@ class MRW {
  private:
   node::ptr_t PureRandomWalk(
       const std::unordered_map<int, int> &goal,
+      const std::vector< std::map<int, int> > &preconditions,
       const std::vector< std::unique_ptr<sas_data::SASOperator> >
           &sas_operators,
       const trie::TrieTable &table,

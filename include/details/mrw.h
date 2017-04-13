@@ -22,13 +22,15 @@ namespace mrw {
 template<class T>
 ptr_t MRW<T>::Search(const vector<int> &variables,
                      const unordered_map<int, int> &goal,
+                     const std::vector< std::map<int, int> > &preconditions,
                      const vector< unique_ptr<SASOperator> > &sas_operators,
                      const TrieTable &table) {
   ptr_t s_zero = node::Node::Construct();
   s_zero->variables_ = variables;
   ptr_t s = s_zero;
   ++generated_;
-  int initial_h_min = heuristic(variables, goal);
+  int initial_h_min = heuristic(variables, goal, preconditions, sas_operators);
+  if (initial_h_min == -1) return nullptr;
   h_min_ = initial_h_min;
   ++evaluated_;
   int counter = 0;
@@ -40,8 +42,8 @@ ptr_t MRW<T>::Search(const vector<int> &variables,
       std::cout << "Restart" << std::endl;
       PrintNewHeuristicValue(h_min_, s->get_g());
     }
-    s = PureRandomWalk(goal, sas_operators, table, s);
-    int h = heuristic(s->variables_, goal);
+    s = PureRandomWalk(goal, preconditions, sas_operators, table, s);
+    int h = heuristic(s->variables_, goal, preconditions, sas_operators);
     if (h < h_min_) {
       h_min_ = h;
       counter = 0;
@@ -56,6 +58,7 @@ ptr_t MRW<T>::Search(const vector<int> &variables,
 template<class T>
 ptr_t MRW<T>::PureRandomWalk(
     const unordered_map<int, int> &goal,
+    const std::vector< std::map<int, int> > &preconditions,
     const vector< unique_ptr<SASOperator> > &sas_operators,
     const TrieTable &table,
     ptr_t s) {
@@ -86,9 +89,9 @@ ptr_t MRW<T>::PureRandomWalk(
       if (sas_data::GoalCheck(child->variables_, goal)) return child;
       s_prime = child;
     }
-    int h = heuristic(s_prime->variables_, goal);
+    int h = heuristic(s_prime->variables_, goal, preconditions, sas_operators);
     ++evaluated_;
-    if (h_min == -1 || h < h_min) {
+    if ((h < h_min || h_min == -1) && h != -1) {
       s_min = s_prime;
       h_min = h;
       counter = 0;

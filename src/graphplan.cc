@@ -21,6 +21,8 @@ using std::unordered_set;
 using std::vector;
 using sas_data::SASOperator;
 
+#include <iostream>
+
 namespace graphplan {
 
 void Graphplan::Initialize(const vector<int> &sups,
@@ -73,22 +75,59 @@ void Graphplan::TranslateGoal(const unordered_map<int, int> &goal) {
 vector<int> Graphplan::Search(
     const vector<int> &initial,
     const vector< map<int, int> > &preconditions,
-    const vector< unique_ptr<SASOperator> > &sas_operators) {
+    const vector< unique_ptr<SASOperator> > &sas_operators) const {
   auto graph = ConstructGraph(initial, preconditions, sas_operators);
+  if (graph.n_layers == -1)
+    return std::vector<int>{-1};
   return ExtractPlan(preconditions, sas_operators, graph);
 }
 
 PlanningGraph Graphplan::ConstructGraph(
     const vector<int> &initial,
     const vector< map<int, int> > &preconditions,
-    const vector< unique_ptr<SASOperator> > &sas_operators) {
-  queue< pair<int, int> > scheduled_facts;
+    const vector< unique_ptr<SASOperator> > &sas_operators) const {
+  queue<int> scheduled_facts;
   queue<int> scheduled_actions;
   PlanningGraph graph(n_facts_, n_actions_);
-  for (int i=0, n=initial.size(); i<n; ++i)
-    scheduled_facts.push(std::make_pair(i, initial[i]));
+  for (int i=0, n=initial.size(); i<n; ++i) {
+    int f = fact_offset_[i]+initial[i];
+    graph.closed.insert(f);
+    scheduled_facts.push(f);
+  }
   int i = 0;
   while (true) {
+    if (scheduled_facts.empty()) {
+      graph.n_layers = -1;
+      // for (int j=0; j<precondition_size_.size(); ++j) {
+      //   std::cout << graph.precondition_counter[j] << "(" << precondition_size_[j] << "){ ";
+      //   for (auto v : preconditions[j]) {
+      //     std::cout << graph.fact_layer_membership[fact_offset_[v.first]+v.second] << " ";
+      //   }
+      //   std::cout << "}" << std::endl;
+      // }
+      // std::cout << "initial" << std::endl;
+      // for (int j=0; j<initial.size(); ++j) {
+      //   std::cout << "var" << j << " " << initial[j] << std::endl;
+      // }
+      // std::cout << "dead end " << i << std::endl;
+      // for (int j=0; j<fact_offset_.size()-1; ++j) {
+      //   std::cout << "var" << j;
+      //   for (int k=0; k<fact_offset_[j+1]-fact_offset_[j]; ++k) {
+      //     if (graph.fact_layer_membership[fact_offset_[j]+k] != -1)
+      //       std::cout << " " << k;
+      //   }
+      //   std::cout << std::endl;
+      // }
+      // int j = fact_offset_.size()-1;
+      // std::cout << "var" << j;
+      // for (int k=0; k<graph.fact_layer_membership.size()-fact_offset_[j]; ++k) {
+      //   if (graph.fact_layer_membership[fact_offset_[j]+k] != -1)
+      //     std::cout << " " << k;
+      // }
+      // std::cout << std::endl;
+      // exit(0);
+      return std::move(graph);
+    }
     FactLayer(i, scheduled_facts, scheduled_actions, &graph);
     if (graph.found_goals.size() == n_goals_) {
       ++i;
@@ -103,16 +142,15 @@ PlanningGraph Graphplan::ConstructGraph(
 
 void Graphplan::FactLayer(
     int i,
-    queue< pair<int, int> > &scheduled_facts,
-    queue<int> &scheduled_actions, PlanningGraph* graph) {
+    queue<int> &scheduled_facts,
+    queue<int> &scheduled_actions, PlanningGraph* graph) const {
   while (!scheduled_facts.empty()) {
-    auto temp = scheduled_facts.front();
+    int f = scheduled_facts.front();
     scheduled_facts.pop();
-    int index = fact_offset_[temp.first] + temp.second;
-    graph->fact_layer_membership[index] = i;
-    if (goal_facts_.find(index) != goal_facts_.end())
-      graph->found_goals.insert(index);
-    for (auto o : precondition_map_[index]) {
+    graph->fact_layer_membership[f] = i;
+    if (goal_facts_.find(f) != goal_facts_.end())
+      graph->found_goals.insert(f);
+    for (auto o : precondition_map_[f]) {
       if (++graph->precondition_counter[o] == precondition_size_[o])
         scheduled_actions.push(o);
     }
@@ -123,8 +161,8 @@ void Graphplan::ActionLayer(
     int i,
     const vector< unique_ptr<SASOperator> > &sas_operators,
     queue<int> &scheduled_actions,
-    queue< pair<int, int> > &scheduled_facts,
-    PlanningGraph* graph) {
+    queue<int> &scheduled_facts,
+    PlanningGraph* graph) const {
   while (!scheduled_actions.empty()) {
     int o = scheduled_actions.front();
     scheduled_actions.pop();
@@ -132,8 +170,11 @@ void Graphplan::ActionLayer(
     for (int j=0, n=sas_operators[o]->get_effcts().size(); j<n; ++j) {
       int var = sas_operators[o]->get_effcts()[j]->get_var();
       int value = sas_operators[o]->get_effcts()[j]->get_value();
-      if (graph->fact_layer_membership[fact_offset_[var]+value] == -1)
-        scheduled_facts.push(std::make_pair(var, value));
+      int f = fact_offset_[var] + value;
+      if (graph->closed.find(f) == graph->closed.end()) {
+        graph->closed.insert(f);
+        scheduled_facts.push(f);
+      }
     }
   }
 }
@@ -141,29 +182,29 @@ void Graphplan::ActionLayer(
 vector<int> Graphplan::ExtractPlan(
     const vector< map<int, int> > &preconditions,
     const vector< unique_ptr<SASOperator> > &sas_operators,
-    const PlanningGraph &graph) {
+    const PlanningGraph &graph) const {
   int m = graph.n_layers - 1;
   vector<int> result;
-  vector< unordered_set<int> > g(graph.n_layers);
+  vector< unordered_set<int> > g_set(graph.n_layers);
   vector< unordered_set<int> > marked(n_facts_);
-  for (auto v : goal_facts_)
-    g[graph.fact_layer_membership[v]].insert(v);
+  for (auto g : goal_facts_)
+    g_set[graph.fact_layer_membership[g]].insert(g);
   for (int i=m; i>0; --i) {
-    for (auto v : g[i]) {
-      if (marked[v].find(i) != marked[v].end()) continue;
-      int o = ChooseAction(v, i, preconditions, graph);
-      for (auto f : preconditions[o]) {
-        int index = fact_offset_[f.first] + f.second;
-        int j = graph.fact_layer_membership[index];
-        if (j != 0 && marked[v].find(i-1) == marked[v].end())
-          g[j].insert(index);
+    for (auto g : g_set[i]) {
+      if (marked[g].find(i) != marked[g].end()) continue;
+      int o = ChooseAction(g, i, preconditions, graph);
+      for (auto v : preconditions[o]) {
+        int f = fact_offset_[v.first] + v.second;
+        int j = graph.fact_layer_membership[f];
+        if (j != 0 && marked[f].find(i-1) == marked[f].end())
+          g_set[j].insert(f);
       }
       for (int j=0, n=sas_operators[o]->get_effcts().size(); j<n; ++j) {
         int var = sas_operators[o]->get_effcts()[j]->get_var();
         int value = sas_operators[o]->get_effcts()[j]->get_value();
-        int f_index = fact_offset_[var] + value;
-        marked[f_index].insert(i);
-        marked[f_index].insert(i-1);
+        int f = fact_offset_[var] + value;
+        marked[f].insert(i);
+        marked[f].insert(i-1);
       }
       result.push_back(o);
     }
@@ -173,7 +214,7 @@ vector<int> Graphplan::ExtractPlan(
 
 int Graphplan::ChooseAction(int index, int i,
                             const vector< map<int, int> > &preconditions,
-                            const PlanningGraph &graph) {
+                            const PlanningGraph &graph) const {
   int min = -1;
   int argmin = 0;
   for (auto o : effect_map_[index]) {

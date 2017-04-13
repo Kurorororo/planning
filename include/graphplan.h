@@ -18,7 +18,10 @@ struct PlanningGraph {
   std::vector<int> fact_layer_membership;
   std::vector<int> action_layer_membership;
   std::vector<int> precondition_counter;
+  std::unordered_set<int> closed;
   std::unordered_set<int> found_goals;
+
+  PlanningGraph() {}
 
   PlanningGraph(int n_facts, int n_actions) {
     n_layers = 0;
@@ -32,6 +35,8 @@ struct PlanningGraph {
 
 class Graphplan {
  public:
+  Graphplan() {}
+
   Graphplan(
       const std::vector<int> &sups,
       const std::unordered_map<int, int> &goal,
@@ -47,7 +52,7 @@ class Graphplan {
       const std::vector<int> &initial,
       const std::vector< std::map<int, int> > &preconditions,
       const std::vector< std::unique_ptr<sas_data::SASOperator> >
-          &sas_operators);
+          &sas_operators) const;
 
  private:
   void Initialize(
@@ -66,28 +71,30 @@ class Graphplan {
       const std::vector<int> &initial,
       const std::vector< std::map<int, int> > &preconditions,
       const std::vector< std::unique_ptr< sas_data::SASOperator> >
-          &sas_operators);
-  void FactLayer(int i, std::queue< std::pair<int, int> > &scheduled_facts,
-                 std::queue<int> &scheduled_actions, PlanningGraph* graph);
+          &sas_operators) const;
+  void FactLayer(int i, std::queue<int> &scheduled_facts,
+                 std::queue<int> &scheduled_actions,
+                 PlanningGraph* graph) const;
   void ActionLayer(
       int i,
       const std::vector< std::unique_ptr<sas_data::SASOperator> >
           &sas_operators,
       std::queue<int> &scheduled_actions,
-      std::queue< std::pair<int, int> > &scheduled_facts,
-      PlanningGraph* graph);
+      std::queue<int> &scheduled_facts,
+      PlanningGraph* graph) const ;
   std::vector<int> ExtractPlan(
      const std::vector< std::map<int, int> > &preconditions,
      const std::vector< std::unique_ptr<sas_data::SASOperator> >
         &sas_operators,
-     const PlanningGraph &graph);
+     const PlanningGraph &graph) const;
   int ChooseAction(int index, int i,
                    const std::vector< std::map<int, int> > &preconditions,
-                   const PlanningGraph &graph);
+                   const PlanningGraph &graph) const;
 
   int n_facts_;
   int n_actions_;
   int n_goals_;
+  PlanningGraph graph_;
   std::vector<int> fact_offset_;
   std::vector<int> precondition_size_;
   std::vector< std::vector<int> > precondition_map_;
