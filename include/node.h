@@ -6,65 +6,28 @@
 #include <boost/intrusive_ptr.hpp>
 #include <boost/pool/pool.hpp>
 
-namespace node {
+namespace planning {
 
-class Node {
- public:
+struct Node {
+  int action;
+  int g;
+  int8_t ref_count;
+  boost::intrusive_ptr<Node> parent_node;
+  std::vector<int> variables;
+
+  static boost::pool<> node_pool;
+
+  Node() : action(-1), g(0), ref_count(0), parent_node(nullptr) {}
+  ~Node() {}
+
   void Destroy() {
     this->~Node();
     node_pool.free(this);
   }
 
-  std::string get_action() const {
-    return action_;
-  }
-
-  void set_action(const std::string &action) {
-    action_ = action;
-  }
-
-  int get_g() const {
-    return g_;
-  }
-
-  void set_g(int g) {
-    g_ = g;
-  }
-
-  int get_step() const {
-    return step_;
-  }
-
-  void set_step(int step) {
-    step_ = step;
-  }
-
-  boost::intrusive_ptr<Node> get_parent_node() {
-    return parent_node_;
-  }
-
-  void set_parent_node(boost::intrusive_ptr<Node> parent_node) {
-    parent_node_ = parent_node;
-  }
-
   static boost::intrusive_ptr<Node> Construct() {
     return boost::intrusive_ptr<Node>(new(node_pool.malloc()) Node());
   }
-
-  std::vector<int> variables_;
-
-  static int n_node;
-
- private:
-  Node() : action_(""), g_(0), step_(0), parent_node_(nullptr) {}
-  ~Node() {}
-
-  int8_t ref_count;
-  std::string action_;
-  int g_;
-  int step_;
-  boost::intrusive_ptr<Node> parent_node_;
-  static boost::pool<> node_pool;
 
   friend void intrusive_ptr_add_ref(Node* ptr) {
     ++(ptr->ref_count);

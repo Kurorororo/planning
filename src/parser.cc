@@ -5,12 +5,11 @@
 #include <queue>
 #include <string>
 #include <sstream>
-#include <unordered_map>
 #include <vector>
 
-#include "sas_data.h"
+#include "data.h"
 
-namespace parser {
+namespace planning {
 
 const std::string kFileError = "invalid SAS file";
 const char kDelimiter = ' ';
@@ -77,38 +76,42 @@ int ParseVariable(std::queue<std::string> &lines) {
   return sup;
 }
 
-void ParseVariables(std::queue<std::string> &lines,
-                    std::vector<int> &variables, std::vector<int> &sups) {
+void ParseVariables(std::queue<std::string> &lines, std::vector<int> &initial,
+                    std::vector<int> &fact_offset) {
   int n = std::stoi(lines.front());
   lines.pop();
-  variables.resize(n);
-  sups.resize(n);
-  for (int i=0; i<n; ++i)
-    sups[i] = ParseVariable(lines);
+  initial.resize(n);
+  fact_offset.resize(n+1);
+  int sum = 0;
+  for (int i=0; i<n; ++i) {
+    fact_offset[i] = sum;
+    sum += ParseVariable(lines);
+  }
+  fact_offset[n] = sum;
 }
 
-void ParseVarValue(const std::string &line,
-                   std::unordered_map<int, int> &var_value) {
+void ParseVarValue(const std::string &line, var_value_t *var_value) {
   std::string buffer;
   std::istringstream line_separater(line);
   std::getline(line_separater, buffer, kDelimiter);
   int var = std::stoi(buffer);
   std::getline(line_separater, buffer, kDelimiter);
   int value = std::stoi(buffer);
-  var_value[var] = value;
+  EncodeVarValue(var, value, var_value);
 }
 
 void ParseMutexGroup(std::queue<std::string> &lines,
-                     std::unordered_map<int, int> &mutex_group) {
+                     std::vector<var_value_t> &mutex_group) {
   if (lines.front() != "begin_mutex_group") {
     std::cerr << kFileError << std::endl;
     exit(1);
   }
   lines.pop();
   int n = std::stoi(lines.front());
+  mutex_group.resize(n);
   lines.pop();
   for (int i=0; i<n; ++i) {
-    ParseVarValue(lines.front(), mutex_group);
+    ParseVarValue(lines.front(), &mutex_group[i]);
     lines.pop();
   }
   if (lines.front() != "end_mutex_group") {
@@ -118,25 +121,23 @@ void ParseMutexGroup(std::queue<std::string> &lines,
   lines.pop();
 }
 
-void ParseMutexGroups(
-    std::queue<std::string> &lines,
-    std::vector<std::unordered_map<int, int> > &mutex_groups) {
+void ParseMutexGroups(std::queue<std::string> &lines,
+                      std::vector< std::vector<var_value_t> > &mutex_groups) {
   int n = std::stoi(lines.front());
-  lines.pop();
   mutex_groups.resize(n);
-  for (int i=0; i<n; ++i) {
+  lines.pop();
+  for (int i=0; i<n; ++i)
     ParseMutexGroup(lines, mutex_groups[i]);
-  }
 }
 
-void ParseState(std::queue<std::string> &lines, std::vector<int> &variables) {
+void ParseState(std::queue<std::string> &lines, std::vector<int> &initial) {
   if (lines.front() != "begin_state") {
     std::cerr << kFileError << std::endl;
     exit(1);
   }
   lines.pop();
-  for (int i=0, n=variables.size(); i<n; ++i) {
-    variables[i] = std::stoi(lines.front());
+  for (int i=0, n=initial.size(); i<n; ++i) {
+    initial[i] = std::stoi(lines.front());
     lines.pop();
   }
   if (lines.front() != "end_state") {
@@ -147,16 +148,17 @@ void ParseState(std::queue<std::string> &lines, std::vector<int> &variables) {
 }
 
 void ParseGoal(std::queue<std::string> &lines,
-               std::unordered_map<int, int> &goal) {
+               std::vector<var_value_t> &goal) {
   if (lines.front() != "begin_goal") {
     std::cerr << kFileError << std::endl;
     exit(1);
   }
   lines.pop();
   int n = std::stoi(lines.front());
+  goal.resize(n);
   lines.pop();
   for (int i=0; i<n; ++i) {
-    ParseVarValue(lines.front(), goal);
+    ParseVarValue(lines.front(), &goal[i]);
     lines.pop();
   }
   if (lines.front() != "end_goal") {
@@ -166,70 +168,65 @@ void ParseGoal(std::queue<std::string> &lines,
   lines.pop();
 }
 
-void ParsePrecondition(std::queue<std::string> &lines,
-                       std::map<int, int> &precondition) {
+int ParsePrecondition(std::queue<std::string> &lines,
+                      std::vector<var_value_t> &precondition) {
   std::string buffer;
   int n = std::stoi(lines.front());
+  precondition.resize(n);
   lines.pop();
   for (int i=0; i<n; ++i) {
-   std::istringstream line_separater(lines.front());
-   std::getline(line_separater, buffer, kDelimiter);
-   int var = std::stoi(buffer);
-   std::getline(line_separater, buffer, kDelimiter);
-   int value = std::stoi(buffer);
-   precondition[var] = value;
+   ParseVarValue(lines.front(), &precondition[i]);
    lines.pop();
   }
+  return n;
 }
 
-void ParseEffects(std::queue<std::string> &lines,
-                  std::map<int, int> &precondition,
-                  std::vector< std::unique_ptr<sas_data::Effect> > &effects) {
+void ParseEffect(std::queue<std::string> &lines,
+                 std::vector<var_value_t> &precondition,
+                 std::vector<var_value_t> &effect) {
   int n = std::stoi(lines.front());
+  effect.resize(n);
   lines.pop();
   std::string buffer;
   for (int i=0; i<n; ++i) {
-    auto effect = sas_data::Effect::Create();
     std::istringstream line_separater(lines.front());
     std::getline(line_separater, buffer, kDelimiter);
-    for (int j=0, m=std::stoi(buffer); j<m; ++j) {
-      std::getline(line_separater, buffer, kDelimiter);
-      int var = std::stoi(buffer);
-      std::getline(line_separater, buffer, kDelimiter);
-      int value = std::stoi(buffer);
-      effect->push_condition(var, value);
+    if (std::stoi(buffer) != 0) {
+      std::cerr << "conditional effect is not supported" << std::endl;
     }
     std::getline(line_separater, buffer, kDelimiter);
     int var = std::stoi(buffer);
     std::getline(line_separater, buffer, kDelimiter);
     int value = std::stoi(buffer);
-    if (value != -1)
-      precondition[var] = value;
+    if (value != -1) {
+      int n = precondition.size();
+      precondition.resize(n+1);
+      EncodeVarValue(var, value, &precondition[n]);
+    }
     std::getline(line_separater, buffer, kDelimiter);
     value = std::stoi(buffer);
-    effect->set_effect(var, value);
-    effects.push_back(std::move(effect));
+    EncodeVarValue(var, value, &effect[i]);
     lines.pop();
   }
 }
 
 void ParseOperator(std::queue<std::string> &lines, int metric,
-                   std::map<int, int> &precondition,
-                   std::unique_ptr<sas_data::SASOperator> &sas_operator) {
+                   std::string *name, int *cost,
+                   std::vector<var_value_t> &precondition,
+                   std::vector<var_value_t> &effect) {
   if (lines.front() != "begin_operator") {
     std::cerr << kFileError << std::endl;
     exit(1);
   }
   lines.pop();
-  sas_operator = sas_data::SASOperator::Create();
-  sas_operator->set_name(lines.front());
+  *name = lines.front();
   lines.pop();
   ParsePrecondition(lines, precondition);
-  ParseEffects(lines, precondition, sas_operator->get_effcts());
+  ParseEffect(lines, precondition, effect);
   if (metric == 0)
-    sas_operator->set_cost(1);
+    *cost = 1;
   else
-    sas_operator->set_cost(std::stoi(lines.front()));
+    *cost = std::stoi(lines.front());
   lines.pop();
   if (lines.front() != "end_operator") {
     std::cerr << kFileError << std::endl;
@@ -238,26 +235,24 @@ void ParseOperator(std::queue<std::string> &lines, int metric,
   lines.pop();
 }
 
-void ParseOperators(
-    std::queue<std::string> &lines, int metric,
-    int n_variables,
-    std::vector< std::map<int, int> > &preconditions,
-    std::vector< std::unique_ptr<sas_data::SASOperator> > &sas_operators) {
+void ParseOperators(std::queue<std::string> &lines, int metric,
+                    Actions *actions) {
   int n = std::stoi(lines.front());
-  preconditions.resize(n);
-  sas_operators.resize(n);
+  actions->names.resize(n);
+  actions->costs.resize(n);
+  actions->preconditions.resize(n);
+  actions->effects.resize(n);
   lines.pop();
   for (int i=0; i<n; ++i)
-    ParseOperator(lines, metric, preconditions[i], sas_operators[i]);
+    ParseOperator(lines, metric, &actions->names[i], &actions->costs[i],
+                  actions->preconditions[i], actions->effects[i]);
 }
 
-void Parse(
-    const std::string &filename, std::vector<int> &variables,
-    std::vector<int> &sups,
-    std::vector< std::unordered_map<int, int> > &mutex_groups,
-    std::unordered_map<int, int> &goal,
-    std::vector< std::map<int, int> > &preconditions,
-    std::vector< std::unique_ptr<sas_data::SASOperator> > &sas_operators) {
+void Parse(const std::string &filename, std::vector<int> &initial,
+           std::vector<int> &fact_offset,
+           std::vector< std::vector<var_value_t> > &mutex_groups,
+           std::vector<var_value_t> &goal,
+           Actions *actions) {
   std::ifstream input;
   input.open(filename, std::ios::in);
   std::string buffer;
@@ -272,12 +267,11 @@ void Parse(
     exit(1);
   }
   int metric = ParseMetric(lines);
-  ParseVariables(lines, variables, sups);
+  ParseVariables(lines, initial, fact_offset);
   ParseMutexGroups(lines, mutex_groups);
-  ParseState(lines, variables);
+  ParseState(lines, initial);
   ParseGoal(lines, goal);
-  ParseOperators(lines, metric, variables.size(), preconditions,
-                 sas_operators);
+  ParseOperators(lines, metric, actions);
   if (std::stoi(lines.front()) != 0) {
     std::cerr << kFileError << std::endl;
     exit(1);

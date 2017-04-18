@@ -2,34 +2,30 @@
 
 #include <algorithm>
 #include <numeric>
-#include <map>
 #include <iostream>
-#include <queue>
 #include <utility>
 #include <vector>
 
-namespace trie {
+#include "data.h"
 
-void TrieTable::set_code_table(const std::vector<int> &sups) {
-  int n = sups.size();
-  code_table_.resize(n);
-  int sum = 0;
-  for (int i=0; i<n; ++i) {
-    code_table_[i] = sum;
-    sum += sups[i];
-  }
-  max_children_ = sum;
-  a_.resize(max_children_);
-  std::fill_n(a_.begin(), a_.size(), std::make_pair(-1, -1));
-}
+namespace planning {
 
-void TrieTable::Insert(int query, const std::map<int, int> &precondition) {
+void TrieTable::Insert(int query, std::vector<var_value_t> precondition,
+                       const std::vector<int> &fact_offset) {
   int i = 0;
   int j = 0;
   int max = precondition.size() - 1;
   int parent_prefix = 0;
+  int max_children = fact_offset.back();
+  if (a_.size() < max_children) {
+    a_.resize(max_children);
+    std::fill_n(a_.begin(), a_.size(), std::make_pair(-1, -1));
+  }
+  std::sort(precondition.begin(), precondition.end());
   for (auto v : precondition) {
-    int index = j + code_table_[v.first] - parent_prefix + v.second;
+    int var, value;
+    DecodeVarValue(v, &var, &value);
+    int index = j + fact_offset.at(var) - parent_prefix + value;
     if (i == max) {
       if (a_[index].second == -1) {
         a_[index].second = data_.size();
@@ -38,11 +34,11 @@ void TrieTable::Insert(int query, const std::map<int, int> &precondition) {
       data_[a_[index].second].push_back(query);
       return;
     }
-    parent_prefix = code_table_[v.first+1];
+    parent_prefix = fact_offset.at(var+1);
     if (a_[index].first == -1) {
       a_[index].first = a_.size();
-      a_.resize(a_.size()+max_children_-parent_prefix);
-      std::fill_n(&a_[a_[index].first], max_children_-parent_prefix,
+      a_.resize(a_.size()+max_children-parent_prefix);
+      std::fill_n(&a_[a_[index].first], max_children-parent_prefix,
                   std::make_pair(-1, -1));
     }
     j = a_[index].first;
@@ -50,49 +46,34 @@ void TrieTable::Insert(int query, const std::map<int, int> &precondition) {
   }
 }
 
-void TrieTable::RecursiveFind(const std::vector<int> &variables, int index,
+std::vector<int> TrieTable::Find(const std::vector<int> &variables,
+                                 const std::vector<int> &fact_offset) const {
+  std::vector<int> result;
+  RecursiveFind(variables, fact_offset, 0, 0, result);
+  return std::move(result);
+}
+
+void TrieTable::RecursiveFind(const std::vector<int> &variables,
+                              const std::vector<int> &fact_offset, int index,
                               int current, std::vector<int> &result) const {
-  int prefix = index - code_table_[current];
+  int prefix = index - fact_offset.at(current);
   for (int i=current, n=variables.size(); i<n; ++i) {
-    int next = code_table_[i] + variables[i] + prefix;
+    int next = fact_offset.at(i) + variables[i] + prefix;
     int offset = a_[next].second;
     if (offset != -1)
       result.insert(result.end(), data_[offset].begin(), data_[offset].end());
     if (a_[next].first == -1) continue;
-    RecursiveFind(variables, a_[next].first, i+1, result);
+    RecursiveFind(variables, fact_offset, a_[next].first, i+1, result);
   }
 }
 
-std::vector<int> TrieTable::Find(const std::vector<int> &variables) const {
-  std::vector<int> result;
-  RecursiveFind(variables, 0, 0, result);
-  return std::move(result);
-}
-
-void SortbyPrecondition(const std::vector< std::vector<int> > &v,
-                        std::vector<int> &indexes) {
-  auto compare = [&v](int x, int y) -> int {
-    for (int i=0, n=v[x].size(); i<n; ++i) {
-      if (v[x][i] == v[y][i]) continue;
-      return v[x][i] < v[y][i];
-    }
-    return x < y;
-  };
-  std::sort(indexes.begin(), indexes.end(), compare);
-}
-
 TrieTable TrieTable::Construct(
-    const std::vector< std::map<int, int> > &preconditions,
-    const std::vector<int> &sups) {
+    const std::vector< std::vector<var_value_t> > &preconditions,
+    const std::vector<int> &fact_offset) {
   TrieTable table;
-  table.set_code_table(sups);
   int n = preconditions.size();
-  // std::vector<int> indexes(n);
-  // std::iota(indexes.begin(), indexes.end(), 0);
-  // SortbyPrecondition(preconditions, indexes);
   for (int i=0; i<n; ++i) {
-    // table.Insert(indexes[i], preconditions[indexes[i]], sups);
-    table.Insert(i, preconditions[i]);
+    table.Insert(i, preconditions[i], fact_offset);
   }
   return std::move(table);
 }
