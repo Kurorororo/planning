@@ -25,7 +25,7 @@ void TrieTable::Insert(int query, std::vector<var_value_t> precondition,
   for (auto v : precondition) {
     int var, value;
     DecodeVarValue(v, &var, &value);
-    int index = j + fact_offset.at(var) - parent_prefix + value;
+    int index = j + fact_offset[var] - parent_prefix + value;
     if (i == max) {
       if (a_[index].second == -1) {
         a_[index].second = data_.size();
@@ -34,7 +34,7 @@ void TrieTable::Insert(int query, std::vector<var_value_t> precondition,
       data_[a_[index].second].push_back(query);
       return;
     }
-    parent_prefix = fact_offset.at(var+1);
+    parent_prefix = fact_offset[var+1];
     if (a_[index].first == -1) {
       a_[index].first = a_.size();
       a_.resize(a_.size()+max_children-parent_prefix);
@@ -56,9 +56,9 @@ std::vector<int> TrieTable::Find(const std::vector<int> &variables,
 void TrieTable::RecursiveFind(const std::vector<int> &variables,
                               const std::vector<int> &fact_offset, int index,
                               int current, std::vector<int> &result) const {
-  int prefix = index - fact_offset.at(current);
+  int prefix = index - fact_offset[current];
   for (int i=current, n=variables.size(); i<n; ++i) {
-    int next = fact_offset.at(i) + variables[i] + prefix;
+    int next = fact_offset[i] + variables[i] + prefix;
     int offset = a_[next].second;
     if (offset != -1)
       result.insert(result.end(), data_[offset].begin(), data_[offset].end());

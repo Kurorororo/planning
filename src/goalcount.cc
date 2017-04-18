@@ -15,7 +15,7 @@ int Goalcount::operator()(const std::vector<int> &variables,
   for (auto v : goal) {
     int var, value;
     DecodeVarValue(v, &var, &value);
-    if (variables.at(var) == value) --count;
+    if (variables[var] == value) --count;
   }
   return count;
 }

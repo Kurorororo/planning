@@ -33,7 +33,7 @@ void Expand(
     planning::ApplyEffect(effects[i], new_variables);
     size_t hash = boost::hash_range(new_variables.begin(),
                                     new_variables.end());
-    int g = node->g + costs.at(i);
+    int g = node->g + costs[i];
     if (closed_list.find(hash) != closed_list.end()
         && closed_list[hash] <= g) {
       continue;

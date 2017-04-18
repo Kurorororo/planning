@@ -18,7 +18,7 @@ bool GoalCheck(const std::vector<var_value_t> &goal,
   for (auto v : goal) {
     int var, value;
     DecodeVarValue(v, &var, &value);
-    if (variables.at(var) != value) return false;
+    if (variables[var] != value) return false;
   }
   return true;
 }
