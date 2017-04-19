@@ -122,10 +122,6 @@ void ConstructGraph(const vector<int> &initial, const vector<int> &fact_offset,
       return;
     }
     ActionLayer(fact_offset, effects, schema, graph);
-    // for (int i=0; i<graph->closed.size(); ++i) {
-    //   std::cout << graph->closed[i] << " ";
-    // }
-    // std::cout << std::endl;
     ++graph->n_layers;
   }
   graph->n_layers = -1;
@@ -163,7 +159,6 @@ vector<int> ExtractPlan(const vector<int> &fact_offset,
   int m = graph->n_layers - 1;
   std::fill(graph->marked[(m+1)%2].begin(), graph->marked[(m+1)%2].end(), 0);
   for (int i=m; i>0; --i) {
-    // std::cout << "i " << i << std::endl;
     std::fill(graph->marked[i%2].begin(), graph->marked[i%2].end(), 0);
     for (auto g : graph->g_set[i]) {
       if (graph->marked[i%2][g] == 1) continue;
