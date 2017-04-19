@@ -18,7 +18,7 @@ using planning::ptr_t;
 namespace planning {
 
 template<class T>
-int Expand(ptr_t node, T heuristic, const vector<int> &fact_offset,
+int Expand(ptr_t node, T &heuristic, const vector<int> &fact_offset,
            const vector<var_value_t> &goal, const Actions &actions,
            const TrieTable &table, vector< vector<ptr_t> > &open_list,
            unordered_map<size_t, int> &closed_list, int min_f) {
