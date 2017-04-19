@@ -1,24 +1,18 @@
 #ifndef PARSER_H_
 #define PARSER_H_
 
-#include <map>
-#include <memory>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
-#include "sas_data.h"
+#include "data.h"
 
-namespace parser {
+namespace planning {
 
-void Parse(
-    const std::string &filename, std::vector<int> &variables,
-    std::vector<int> &sups,
-    std::vector< std::unordered_map<int, int> > &mutex_groups,
-    std::unordered_map<int, int> &goal,
-    std::vector< std::map<int, int> > &preconditions,
-    std::vector< std::unique_ptr<sas_data::SASOperator> > &sas_operators);
+void Parse(const std::string &filename, std::vector<int> &initial,
+           std::vector<int> &fact_offset,
+           std::vector< std::vector<var_value_t> > &mutex_groups,
+           std::vector<var_value_t> &goal, Actions *actions);
 
-} // namespace parser
+} // namespace planning
 
 #endif // PARSER_H_

@@ -1,33 +1,28 @@
 #include <chrono>
-#include <map>
 #include <iostream>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 #include "astar.h"
+#include "data.h"
 #include "parser.h"
 #include "trie.h"
 
-namespace astar {
+namespace planning {
 
 template<class T>
 void Run(std::string filename) {
-  std::vector<int> variables;
-  std::vector<int> sups;
-  std::vector< std::unordered_map<int, int> > mutex_groups;
-  std::unordered_map<int, int> goal;
-  std::vector< std::map<int, int> > preconditions;
-  std::vector< std::unique_ptr<sas_data::SASOperator> > sas_operators;
+  std::vector<int> initial;
+  std::vector<int> fact_offset;
+  std::vector< std::vector<var_value_t> > mutex_groups;
+  std::vector<var_value_t> goal;
+  Actions actions;
 
-  parser::Parse(filename, variables, sups, mutex_groups, goal, preconditions,
-                sas_operators);
+  Parse(filename, initial, fact_offset, mutex_groups, goal, &actions);
 
   auto chrono_start = std::chrono::system_clock::now();
-  auto table = trie::TrieTable::Construct(preconditions, sups);
-  AstarSearch<T> astar(sups, goal, preconditions, sas_operators);
-  auto result = astar.Search(variables, goal, preconditions, sas_operators,
-                             table);
+  auto table = TrieTable::Construct(actions.preconditions, fact_offset);
+  auto result = AstarSearch<T>(initial, fact_offset, goal, actions, table);
   auto chrono_end = std::chrono::system_clock::now();
 
   if (result == nullptr) {
@@ -41,35 +36,33 @@ void Run(std::string filename) {
   double search_time = static_cast<double>(ns) / 1e9;
   std::cout << "Acutual search time: " << search_time << "s" << std::endl;
 
-  int step = result->get_step();
-  int cost = result->get_g();
+  int result_cost = result->g;
 
-  std::vector<std::string> actions;
-  std::vector<int> costs;
-  while (result != nullptr) {
-    actions.push_back(result->get_action());
-    costs.push_back(result->get_g());
-    result = result->get_parent_node();
+  std::vector<std::string> name_array;
+  std::vector<int> cost_array;
+  int step = 0;
+  while (result->parent_node != nullptr) {
+    name_array.push_back(actions.names[result->action]);
+    cost_array.push_back(result->g);
+    ++step;
+    result = result->parent_node;
   }
 
   int sum = 0;
-  while (!actions.empty()) {
-    int cost = costs.back() - sum;
+  while (!name_array.empty()) {
+    int cost = cost_array.back() - sum;
     sum += cost;
-    if (actions.back() != "")
-      std::cout << actions.back() << " (" << cost << ")" << std::endl;
-    costs.pop_back();
-    actions.pop_back();
+    if (name_array.back() != "")
+      std::cout << name_array.back() << " (" << cost << ")" << std::endl;
+    cost_array.pop_back();
+    name_array.pop_back();
   }
 
   std::cout << "Plan length: " << step << " step(s)" << std::endl;
-  std::cout << "Plan cost: " << step << std::endl;
-  std::cout << "Expanded " << astar.get_expanded() << " state(s)"
-            << std::endl;
-  std::cout << "Evaluated " << astar.get_evaluated() << " state(s)"
-            << std::endl;
-  std::cout << "Generated " << astar.get_generated() << " state(s)"
-            << std::endl;
+  std::cout << "Plan cost: " << result_cost << std::endl;
+  std::cout << "Expanded " << expanded << " state(s)" << std::endl;
+  std::cout << "Evaluated " << evaluated << " state(s)" << std::endl;
+  std::cout << "Generated " << generated << " state(s)" << std::endl;
   std::cout << "Search time: " << search_time << "s" << std::endl;
   std::cout << "Solution found." << std::endl;
 }

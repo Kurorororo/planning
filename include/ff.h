@@ -1,47 +1,31 @@
-#ifndef GOALCOUNT_H_
-#define GOALCOUNT_H_
+#ifndef FF_H_
+#define FF_H_
 
-#include <map>
-#include <memory>
-#include <unordered_map>
 #include <vector>
 
+#include "data.h"
 #include "graphplan.h"
 #include "heuristic.h"
-#include "sas_data.h"
 
-#include <iostream>
-
-namespace heuristic {
+namespace planning {
 
 class FF : public HeuristicInterface<FF> {
  public:
-  void Initialize(
-    const std::vector<int> &sups,
-    const std::unordered_map<int, int> &goal,
-    const std::vector< std::map<int, int> > &preconditions,
-    const std::vector< std::unique_ptr< sas_data::SASOperator> >
-        &sas_operators) {
-    planner_ = graphplan::Graphplan(sups, goal, preconditions, sas_operators);
+  void Initialize(const std::vector<int> &fact_offset,
+                  const std::vector<var_value_t> &goal,
+                  const Actions &actions) {
+    InitializeSchema(fact_offset, goal, actions, &schmea_);
+    InitializeGraph(fact_offset, schmea_, &graph_);
   }
 
-  int operator()(
-      const std::vector<int> &variables,
-      const std::unordered_map<int, int> &goal,
-      const std::vector< std::map<int, int> > &preconditions,
-      const std::vector< std::unique_ptr< sas_data::SASOperator> >
-          &sas_operators) {
-    auto result = planner_.Search(variables, preconditions, sas_operators);
-    int sum = 0;
-    for (auto o : result) {
-      if (o == -1) return -1;
-      sum += sas_operators[o]->get_cost();
-    }
-    return sum;
-  }
+  int operator()(const std::vector<int> &variables,
+                 const std::vector<int> &fact_offset,
+                 const std::vector<var_value_t> &goal,
+                 const Actions &actions);
 
  private:
-  graphplan::Graphplan planner_;
+  GraphSchema schmea_;
+  PlanningGraph graph_;
 };
 
 } // namespace heuristic

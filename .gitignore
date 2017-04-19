@@ -1,6 +1,6 @@
 /bin/*
 /data/*
-/benchmark/*
+/benchmarks/*
 !/bin/.gitkeep
 !/data/.gitkeep
 .DS_Store

@@ -1,36 +1,38 @@
 #ifndef TRIE_H_
 #define TRIE_H_
 
-#include <map>
+#include <utility>
 #include <vector>
 
-namespace trie {
+#include "data.h"
+
+namespace planning {
 
 class TrieTable {
  public:
   TrieTable() {}
   ~TrieTable() {}
 
-  void set_code_table(const std::vector<int> &sups);
-  void Insert(int query, const std::map<int, int> &precondition);
-  std::vector<int> Find(const std::vector<int> &variables) const;
+  void Insert(int query, std::vector<var_value_t> precondition,
+              const std::vector<int> &fact_offset);
+  std::vector<int> Find(const std::vector<int> &variables,
+                        const std::vector<int> &fact_offset) const;
 
   void Print() const;
 
   static TrieTable Construct(
-      const std::vector< std::map<int, int> > &preconditions,
+      const std::vector< std::vector<var_value_t> > &preconditions,
       const std::vector<int> &sups);
 
  private:
-  void RecursiveFind(const std::vector<int> &variables, int index,
+  void RecursiveFind(const std::vector<int> &variables,
+                     const std::vector<int> &fact_offset, int index,
                      int current, std::vector<int> &result) const;
 
-  int max_children_;
   std::vector< std::pair<int, int> > a_;
-  std::vector<int> code_table_;
   std::vector< std::vector<int> > data_;
 };
 
-} // namespace trie
+} // namespace planning
 
 #endif // TRIE_H_
