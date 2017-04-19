@@ -19,8 +19,8 @@ goalcount_astar:
   $(SRC_DIR)/parser.cc -o $(BIN_DIR)/goalcount_astar
 
 ff_astar:
-	$(CXX) -std=c++14 -O3 $(INCS) $(SRC_DIR)/run_ff_astar.cc  \
-  $(SRC_DIR)/sas_data.cc $(SRC_DIR)/trie.cc $(SRC_DIR)/parser.cc \
+	$(CXX) -std=c++14 -O3 $(INCS) $(SRC_DIR)/run_ff_astar.cc $(SRC_DIR)/ff.cc  \
+  $(SRC_DIR)/data.cc $(SRC_DIR)/trie.cc $(SRC_DIR)/parser.cc \
   $(SRC_DIR)/graphplan.cc -o $(BIN_DIR)/ff_astar
 
 goalcount_mrw:
@@ -39,7 +39,7 @@ bfs:
 
 graphplan:
 	$(CXX) -std=c++14 -O3 $(INCS) $(SRC_DIR)/run_graphplan.cc \
-  $(SRC_DIR)/graphplan.cc $(SRC_DIR)/sas_data.cc $(SRC_DIR)/parser.cc \
+  $(SRC_DIR)/graphplan.cc $(SRC_DIR)/data.cc $(SRC_DIR)/parser.cc \
   -o $(BIN_DIR)/graphplan
 
 test_data:

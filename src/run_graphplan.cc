@@ -4,8 +4,11 @@
 #include <unordered_map>
 #include <vector>
 
+#include "data.h"
 #include "graphplan.h"
 #include "parser.h"
+
+using planning::var_value_t;
 
 int main(int argc, char *argv[]) {
   if (argc != 2) {
@@ -14,20 +17,22 @@ int main(int argc, char *argv[]) {
   }
   std::string filename = argv[1];
   std::vector<int> initial;
-  std::vector<int> sups;
-  std::vector< std::unordered_map<int, int> > mutex_groups;
-  std::unordered_map<int, int> goal;
-  std::vector< std::map<int, int> > preconditions;
-  std::vector< std::unique_ptr<sas_data::SASOperator> > sas_operators;
-  parser::Parse(filename, initial, sups, mutex_groups, goal, preconditions,
-                sas_operators);
-  graphplan::Graphplan plan(sups, goal, preconditions, sas_operators);
-  auto result = plan.Search(initial, preconditions, sas_operators);
+  std::vector<int> fact_offset;
+  std::vector< std::vector<var_value_t> > mutex_groups;
+  std::vector<var_value_t> goal;
+  planning::Actions actions;
+  planning::Parse(filename, initial, fact_offset, mutex_groups, goal,
+                  &actions);
+  planning::GraphSchema schema;
+  planning::InitializeSchema(fact_offset, goal, actions, &schema);
+  planning::PlanningGraph graph;
+  planning::InitializeGraph(fact_offset, schema, &graph);
+  auto result = Search(initial, fact_offset, actions, schema, &graph);
   for (int i=result.size()-1; i>-1; --i) {
     if (result[i] == -1) {
       std::cout << "faild to solve problem." << std::endl;
       exit(0);
     }
-    std::cout << sas_operators[result[i]]->get_name() << std::endl;
+    std::cout << actions.names[result[i]] << std::endl;
   }
 }
