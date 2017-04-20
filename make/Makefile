@@ -54,5 +54,20 @@ test_trie:
 	$(CXX) -std=c++14 $(INCS) $(TEST_DIR)/test_trie.cc $(SRC_DIR)/trie.cc \
   $(TEST_DIR)/data.cc -o $(BIN_DIR)/test_trie
 
+test_graphplan:
+	$(CXX) -std=c++14 $(INCS) $(TEST_DIR)/test_graphplan.cc \
+  $(SRC_DIR)/graphplan.cc $(SRC_DIR)/data.cc $(SRC_DIR)/parser.cc \
+  -o $(BIN_DIR)/test_graphplan
+
+test_ff_astar:
+	$(CXX) -std=c++14 $(INCS) $(TEST_DIR)/test_ff_astar.cc $(SRC_DIR)/ff.cc  \
+  $(SRC_DIR)/data.cc $(SRC_DIR)/trie.cc $(SRC_DIR)/parser.cc \
+  $(SRC_DIR)/graphplan.cc -o $(BIN_DIR)/test_ff_astar
+
+test_ff_mrw:
+	$(CXX) -std=c++14 $(INCS) $(TEST_DIR)/test_ff_mrw.cc $(SRC_DIR)/ff.cc \
+  $(SRC_DIR)/graphplan.cc $(SRC_DIR)/data.cc $(SRC_DIR)/trie.cc \
+  $(SRC_DIR)/parser.cc -o $(BIN_DIR)/test_ff_mrw
+
 clean:
 	rm -f $(BIN_DIR)/*
