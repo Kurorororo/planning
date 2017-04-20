@@ -157,9 +157,9 @@ vector<int> ExtractPlan(const vector<int> &fact_offset,
   for (auto g : schema.goal_facts)
     graph->g_set[graph->fact_layer_membership[g]].push_back(g);
   int m = graph->n_layers - 1;
-  std::fill(graph->marked[(m+1)%2].begin(), graph->marked[(m+1)%2].end(), 0);
+  std::fill(graph->marked[m%2].begin(), graph->marked[m%2].end(), 0);
   for (int i=m; i>0; --i) {
-    std::fill(graph->marked[i%2].begin(), graph->marked[i%2].end(), 0);
+    std::fill(graph->marked[(i+1)%2].begin(), graph->marked[(i+1)%2].end(), 0);
     for (auto g : graph->g_set[i]) {
       if (graph->marked[i%2][g] == 1) continue;
       int o = ChooseAction(g, i, fact_offset, actions.preconditions, schema,
